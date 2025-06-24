@@ -3,28 +3,42 @@ import { useState } from "react";
 import Image from "next/image";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
 import { SURVIVORS } from "@/data/survivors";
+import { useBuildActions } from "@/store/useBuildStore";
+import { ITEMS } from "@/data/items";
 
 export default function SurvivorSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSurvivor, setSelectedSurvivor] = useState(SURVIVORS[0]);
+  const { addItem, resetBuild } = useBuildActions();
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
   const handleSelect = (survivor: (typeof SURVIVORS)[0]) => {
     setSelectedSurvivor(survivor);
     setIsOpen(false);
+    
+    // Resetear el build primero
+    resetBuild();
+    
+    // Si el survivor es Captain, añadir Defensive Microbots
+    if (survivor.id === "captain") {
+      const microbotsItem = ITEMS.find(item => item.id === "defensive-microbots");
+      if (microbotsItem) {
+        addItem(microbotsItem);
+      }
+    }
   };
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-white mb-4">Select Survivor</h2>
+      <h2 className="text-xl font-semibold text-white mb-4">Survivor</h2>
 
       {/* Selector dropdown */}
       <div className="relative">
         {/* Botón selector */}
         <button
           onClick={toggleDropdown}
-          className="flex items-center justify-between w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-left hover:bg-gray-750 transition-colors"
+          className="flex items-center justify-between w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-left hover:bg-gray-600 transition-colors cursor-pointer"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
@@ -37,7 +51,7 @@ export default function SurvivorSelector() {
                 height={32}
                 className="rounded-sm object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/survivors/default.png";
+                  (e.target as HTMLImageElement).src = "/survivors/commando.png";
                 }}
               />
             </div>
@@ -60,7 +74,7 @@ export default function SurvivorSelector() {
                   role="option"
                   aria-selected={selectedSurvivor.id === survivor.id}
                   onClick={() => handleSelect(survivor)}
-                  className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-750 transition-colors ${
+                  className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-600 transition-colors ${
                     selectedSurvivor.id === survivor.id ? "bg-gray-750" : ""
                   }`}
                 >
@@ -101,6 +115,11 @@ export default function SurvivorSelector() {
           {selectedSurvivor.name}
         </h3>
         <p className="text-gray-300 text-sm">{selectedSurvivor.description}</p>
+        {selectedSurvivor.id === "captain" && (
+          <p className="text-xs text-green-400 mt-2">
+            Default item added: Defensive Microbots
+          </p>
+        )}
       </div>
     </div>
   );
