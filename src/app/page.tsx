@@ -1,6 +1,7 @@
 import SurvivorSelector from "@/components/builder/SurvivorSelector";
 import ItemGrid from "@/components/items/ItemGrid";
 import BuildContainer from "@/components/builder/BuildContainer";
+import { Suspense } from "react";
 
 export default function Home() {
   return (
@@ -11,7 +12,9 @@ export default function Home() {
           <ItemGrid />
         </div>
         <div className="lg:col-span-1 mt-11">
-          <BuildContainer />
+          <Suspense fallback={<div>Loading...</div>}>
+            <BuildContainer />
+          </Suspense>
         </div>
       </div>
     </div>
