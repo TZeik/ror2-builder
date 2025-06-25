@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { BuildItem, Item } from "@/lib/types/gameTypes";
+import { ITEMS } from "@/data/items";
 interface SavedBuild {
   id: string;
   name: string;
@@ -17,11 +18,14 @@ interface BuildState {
     addItem: (item: Item) => void;
     updateItemCount: (itemId: string, newCount: number) => void;
     removeItem: (itemId: string) => void;
-    resetBuild: () => void;
+    resetBuild: (survivorId?: string) => void;
     saveCurrentBuild: (name: string, survivorId: string) => void;
     loadBuild: (buildId: string) => void;
     deleteBuild: (buildId: string) => void;
-    importBuild: (buildData: { items: BuildItem[]; survivorId: string }) => void;
+    importBuild: (buildData: {
+      items: BuildItem[];
+      survivorId: string;
+    }) => void;
     getBuildsBySurvivor: (survivorId: string) => SavedBuild[];
   };
 }
@@ -61,7 +65,20 @@ const useBuildStore = create<BuildState>()(
           set((state) => ({
             items: state.items.filter((i) => i.item.id !== itemId),
           })),
-        resetBuild: () => set({ items: [] }),
+        resetBuild: (survivorId?) =>
+          set(() => {
+            if (survivorId && survivorId === "captain") {
+              const defensiveMicrobots = ITEMS.find(
+                (item) => item.id === "defensive-microbots"
+              );
+              if (defensiveMicrobots) {
+                return {
+                  items: [{ item: defensiveMicrobots, count: 1 }],
+                };
+              }
+            }
+            return { items: [] };
+          }),
         saveCurrentBuild: (name, survivorId) =>
           set((state) => {
             if (state.items.length === 0) return state;

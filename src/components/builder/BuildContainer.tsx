@@ -18,10 +18,62 @@ import React, { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BuildItem, Item } from "@/lib/types/gameTypes";
+import { BuildItem, Item, Rarity } from "@/lib/types/gameTypes";
 import { useSurvivor } from "@/context/SurvivorContext";
 import { SURVIVORS } from "@/data/survivors";
 import { useDevice } from "@/context/DeviceContext";
+
+// Rarity color configuration
+const RARITY_STYLES: Record<
+  Rarity,
+  { bg: string; border: string; text: string }
+> = {
+  common: {
+    bg: "bg-gray-500/20",
+    border: "border-gray-500",
+    text: "text-gray-100",
+  },
+  uncommon: {
+    bg: "bg-green-500/20",
+    border: "border-green-500",
+    text: "text-green-300",
+  },
+  legendary: {
+    bg: "bg-red-500/20",
+    border: "border-red-500",
+    text: "text-red-300",
+  },
+  boss: {
+    bg: "bg-yellow-500/20",
+    border: "border-yellow-500",
+    text: "text-yellow-300",
+  },
+  void: {
+    bg: "bg-purple-500/20",
+    border: "border-purple-500",
+    text: "text-purple-300",
+  },
+  lunar: {
+    bg: "bg-blue-500/20",
+    border: "border-blue-500",
+    text: "text-blue-300",
+  },
+  equipment: {
+    bg: "bg-orange-500/20",
+    border: "border-orange-500",
+    text: "text-orange-300",
+  },
+  lunarEquipment: {
+    bg: "bg-cyan-400/20",
+    border: "border-cyan-400",
+    text: "text-cyan-300",
+  },
+  eliteEquipment: {
+    bg: "bg-yellow-200/20",
+    border: "border-yellow-200",
+    text: "text-yellow-300",
+  },
+};
 
 export default function BuildContainer() {
   const searchParams = useSearchParams();
@@ -365,7 +417,7 @@ export default function BuildContainer() {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs">
+                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs" aria-describedby={undefined}>
                   <Dialog.Title className="text-lg font-semibold mb-3">
                     Save Build
                   </Dialog.Title>
@@ -457,7 +509,7 @@ export default function BuildContainer() {
         <Dialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs">
+            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs" aria-describedby={undefined}>
               <Dialog.Title className="text-lg font-semibold mb-3">
                 Delete Build
               </Dialog.Title>
@@ -502,7 +554,7 @@ export default function BuildContainer() {
 
                 <div className="flex-1 min-w-0">
                   <h3 className="text-xs font-medium truncate">{item.name}</h3>
-                  <p className="text-2xs text-gray-400 capitalize">
+                  <p className={`text-xs ${RARITY_STYLES[item.rarity].text} capitalize`}>
                     {item.rarity}
                   </p>
                 </div>
@@ -510,26 +562,26 @@ export default function BuildContainer() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateItemCount(item.id, count - 1)}
-                    className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
+                    className="p-2 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
                   >
-                    <FiMinus size={12} />
+                    <FiMinus size={18} />
                   </button>
 
                   <span className="w-4 text-center text-xs">{count}</span>
 
                   <button
                     onClick={() => updateItemCount(item.id, count + 1)}
-                    className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
+                    className="p-2 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
                   >
-                    <FiPlus size={12} />
+                    <FiPlus size={18} />
                   </button>
 
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="p-0.5 text-gray-400 hover:text-red-500 rounded ml-1 cursor-pointer"
+                    className="p-2 text-gray-400 hover:text-red-500 rounded ml-1 cursor-pointer"
                     title="Remove item"
                   >
-                    <FiTrash2 size={12} />
+                    <FiTrash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -555,8 +607,8 @@ export default function BuildContainer() {
           </div>
 
           <button
-            className="w-full mt-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-medium transition-colors"
-            onClick={() => resetBuild()}
+            className="w-full mt-3 py-1 bg-gray-700 active:bg-gray-600 rounded-lg text-xs font-medium transition-colors"
+            onClick={() => resetBuild(selectedSurvivor.id)}
           >
             Reset Build
           </button>
@@ -603,7 +655,7 @@ export default function BuildContainer() {
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-              <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+              <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md" aria-describedby={undefined}>
                 <Dialog.Title className="text-xl font-semibold mb-4">
                   Save Build
                 </Dialog.Title>
@@ -695,7 +747,7 @@ export default function BuildContainer() {
       <Dialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md" aria-describedby={undefined}>
             <Dialog.Title className="text-xl font-semibold mb-4">
               Delete Build
             </Dialog.Title>
@@ -740,7 +792,7 @@ export default function BuildContainer() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-medium truncate">{item.name}</h3>
-                <p className="text-xs text-gray-400 capitalize">
+                <p className={`text-xs ${RARITY_STYLES[item.rarity].text} capitalize`}>
                   {item.rarity}
                 </p>
               </div>
@@ -794,7 +846,7 @@ export default function BuildContainer() {
 
         <button
           className="w-full mt-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
-          onClick={() => resetBuild()}
+          onClick={() => resetBuild(selectedSurvivor.id)}
         >
           Reset Build
         </button>

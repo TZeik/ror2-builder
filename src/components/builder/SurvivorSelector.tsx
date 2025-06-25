@@ -7,6 +7,12 @@ import { useBuildActions } from "@/store/useBuildStore";
 import { useSurvivor } from "@/context/SurvivorContext";
 import { ITEMS } from "@/data/items";
 import { useDevice } from "@/context/DeviceContext";
+import { GiHealthNormal } from "react-icons/gi";
+import { GiHealthIncrease } from "react-icons/gi";
+import { FaShield } from "react-icons/fa6";
+import { PiSwordBold } from "react-icons/pi";
+import { GiWalkingBoot } from "react-icons/gi";
+import { LuAtom } from "react-icons/lu";
 
 export default function SurvivorSelector() {
   const [isOpen, setIsOpen] = useState(false);
@@ -156,15 +162,21 @@ export default function SurvivorSelector() {
             <p className="text-gray-300 text-xs mb-3 text-center">
               {selectedSurvivor.description}
             </p>
+            {selectedSurvivor.id === "captain" && (
+            <p className="text-xs text-green-400 text-center mb-2">
+              Default Item:{" "}
+              <span className="text-red-300">Defensive Microbots</span>
+            </p>
+          )}
 
             {/* Selector de nivel */}
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-gray-400 text-xs">Level:</span>
+            <div className="flex flex-col items-center justify-center gap-1 mb-6">
+              <span className="text-gray-400 text-xs">Level</span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleLevelChange(level - 1)}
                   disabled={level <= 1}
-                  className="p-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
+                  className="p-3 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
                 >
                   <FiMinus size={12} />
                 </button>
@@ -176,12 +188,12 @@ export default function SurvivorSelector() {
                   onChange={(e) =>
                     handleLevelChange(parseInt(e.target.value) || 1)
                   }
-                  className="w-12 text-center bg-gray-700 border border-gray-600 rounded py-1 px-1 text-xs"
+                  className="w-12 text-center bg-gray-700 border border-gray-600 rounded py-2 px-2 text-xs"
                 />
                 <button
                   onClick={() => handleLevelChange(level + 1)}
                   disabled={level >= 94}
-                  className="p-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
+                  className="p-3 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
                 >
                   <FiPlus size={12} />
                 </button>
@@ -189,9 +201,12 @@ export default function SurvivorSelector() {
             </div>
 
             {/* Estadísticas */}
-            <div className="grid grid-cols-2 gap-2 text-xs text-center">
-              <div>
-                <p className="text-gray-400">Health</p>
+            <div className="grid grid-cols-3 gap-4 text-xs">
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <GiHealthNormal className="text-green-400" />
+                  <p className="text-gray-400">Health</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.health,
@@ -202,8 +217,11 @@ export default function SurvivorSelector() {
                   </span>
                 </p>
               </div>
-              <div>
-                <p className="text-gray-400">Health Regen</p>
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <GiHealthIncrease className="text-green-300" />
+                  <p className="text-gray-400">Health Regen</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.healthRegen,
@@ -215,8 +233,11 @@ export default function SurvivorSelector() {
                   </span>
                 </p>
               </div>
-              <div>
-                <p className="text-gray-400">Damage</p>
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <PiSwordBold className="text-red-400" />
+                  <p className="text-gray-400">Damage</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.damage,
@@ -227,32 +248,35 @@ export default function SurvivorSelector() {
                   </span>
                 </p>
               </div>
-              <div>
-                <p className="text-gray-400">Speed</p>
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <GiWalkingBoot className="text-emerald-200" />
+                  <p className="text-gray-400">Speed</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.speed} m/s
                 </p>
               </div>
-              <div>
-                <p className="text-gray-400">Armor</p>
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <FaShield className="text-blue-300" />
+                  <p className="text-gray-400">Armor</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.armor}
                 </p>
               </div>
-              <div>
-                <p className="text-gray-400">Mass</p>
+              <div className="flex flex-col items-center">
+                <div className="flex flex-row gap-2">
+                  <LuAtom className="text-purple-300" />
+                  <p className="text-gray-400">Mass</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.mass}
                 </p>
               </div>
             </div>
           </div>
-
-          {selectedSurvivor.id === "captain" && (
-            <p className="text-xs text-green-400 mt-2 text-center">
-              Default item: Defensive Microbots
-            </p>
-          )}
         </div>
       </div>
     );
@@ -342,31 +366,24 @@ export default function SurvivorSelector() {
       {/* Descripción del personaje seleccionado */}
       <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
         <div className="flex flex-col md:flex-row gap-10">
-          {/* Imagen del personaje */}
-          <div className="flex-shrink-0">
-            <div className="w-32 h-32 relative">
-              <Image
-                priority={false}
-                src={selectedSurvivor.iconUrl}
-                alt={selectedSurvivor.name}
-                width={128}
-                height={128}
-                className="rounded-sm object-cover border border-gray-200"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/survivors/default.png";
-                }}
-              />
+          <div className="flex flex-col gap-5 justify-center items-center">
+            {/* Imagen del personaje */}
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 relative">
+                <Image
+                  priority={false}
+                  src={selectedSurvivor.iconUrl}
+                  alt={selectedSurvivor.name}
+                  width={128}
+                  height={128}
+                  className="rounded-sm object-cover border border-gray-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "/survivors/default.png";
+                  }}
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Información y estadísticas */}
-          <div className="flex-1">
-            <h3 className="text-lg font-medium text-orange-500 mb-1">
-              {selectedSurvivor.name}
-            </h3>
-            <p className="text-gray-300 text-sm mb-3">
-              {selectedSurvivor.description}
-            </p>
 
             {/* Selector de nivel */}
             <div className="flex items-center gap-3 mb-4">
@@ -398,11 +415,24 @@ export default function SurvivorSelector() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Información y estadísticas */}
+          <div className="flex-1">
+            <h3 className="text-lg font-medium text-orange-500 mb-1">
+              {selectedSurvivor.name}
+            </h3>
+            <p className="text-gray-300 text-sm mb-3">
+              {selectedSurvivor.description}
+            </p>
 
             {/* Estadísticas */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-3 gap-3 text-sm">
               <div>
-                <p className="text-gray-400">Health</p>
+                <div className="flex flex-row items-center gap-2">
+                  <GiHealthNormal className="text-green-400" />
+                  <p className="text-gray-400">Health</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.health,
@@ -414,7 +444,10 @@ export default function SurvivorSelector() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Health Regen</p>
+                <div className="flex flex-row items-center gap-2">
+                  <GiHealthIncrease className="text-green-300" />
+                  <p className="text-gray-400">Health Regen</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.healthRegen,
@@ -427,7 +460,10 @@ export default function SurvivorSelector() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Damage</p>
+                <div className="flex flex-row items-center gap-2">
+                  <PiSwordBold className="text-red-400" />
+                  <p className="text-gray-400">Damage</p>
+                </div>
                 <p className="font-medium">
                   {calculateStat(
                     selectedSurvivor.statistics.damage,
@@ -439,19 +475,28 @@ export default function SurvivorSelector() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Speed</p>
+                <div className="flex flex-row items-center gap-2">
+                  <GiWalkingBoot className="text-emerald-200" />
+                  <p className="text-gray-400">Speed</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.speed} m/s
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Armor</p>
+                <div className="flex flex-row items-center gap-2">
+                  <FaShield className="text-blue-300" />
+                  <p className="text-gray-400">Armor</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.armor}
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Mass</p>
+                <div className="flex flex-row items-center gap-2">
+                  <LuAtom className="text-purple-300" />
+                  <p className="text-gray-400">Mass</p>
+                </div>
                 <p className="font-medium">
                   {selectedSurvivor.statistics.mass}
                 </p>
@@ -461,8 +506,9 @@ export default function SurvivorSelector() {
         </div>
 
         {selectedSurvivor.id === "captain" && (
-          <p className="text-xs text-green-400 mt-2">
-            Default item added: Defensive Microbots
+          <p className="text-xs text-green-400">
+            Default Item:{" "}
+            <span className="text-red-300">Defensive Microbots</span>
           </p>
         )}
       </div>
