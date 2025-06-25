@@ -8,49 +8,90 @@ import {
   FiSave,
   FiDownload,
   FiUpload,
+  FiCheck,
+  FiX,
 } from "react-icons/fi";
 import { useDrop } from "react-dnd";
-import { useBuildActions, useCurrentBuild, useSavedBuilds } from "@/store/useBuildStore";
+import { useBuildActions, useCurrentBuild } from "@/store/useBuildStore";
 import { ITEMS } from "@/data/items";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
-import * as Dialog from '@radix-ui/react-dialog';
+import * as Dialog from "@radix-ui/react-dialog";
+import { BuildItem, Item } from "@/lib/types/gameTypes";
+import { useSurvivor } from "@/context/SurvivorContext";
+import { SURVIVORS } from "@/data/survivors";
 
 export default function BuildContainer() {
   const searchParams = useSearchParams();
   const buildItems = useCurrentBuild();
-  const { addItem, updateItemCount, removeItem, resetBuild, saveCurrentBuild, loadBuild } = useBuildActions();
+  const {
+    addItem,
+    updateItemCount,
+    removeItem,
+    resetBuild,
+    saveCurrentBuild,
+    loadBuild,
+    importBuild,
+    deleteBuild,
+    getBuildsBySurvivor,
+  } = useBuildActions();
   const [isImporting, setIsImporting] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [buildName, setBuildName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const selectedSurvivorId = "captain"; // Esto debería venir de tu SurvivorSelector
+  const { selectedSurvivor, setSelectedSurvivor } = useSurvivor();
+  const [selectKey, setSelectKey] = useState(0);
+  const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
 
   // Cargar build desde URL si existe
   useEffect(() => {
-    const buildParam = searchParams.get('build');
+    const buildParam = searchParams.get("build");
     if (buildParam) {
       try {
         const buildData = JSON.parse(atob(buildParam));
-        const itemsToAdd = buildData.items.map(({ id, count }) => {
-          const item = ITEMS.find(i => i.id === id);
-          return item ? { item, count } : null;
-        }).filter(Boolean);
-        
-        resetBuild();
-        itemsToAdd.forEach(({ item, count }) => {
-          for (let i = 0; i < count; i++) {
-            addItem(item);
+
+        // Cambiar al survivor correspondiente
+        if (buildData.survivorId) {
+          const foundSurvivor = SURVIVORS.find(
+            (s) => s.id === buildData.survivorId
+          );
+          if (foundSurvivor) {
+            setSelectedSurvivor(foundSurvivor);
           }
-        });
+        }
+
+        if (buildData.items) {
+          // Crear arreglo de items con sus cantidades
+          const itemsToAdd: BuildItem[] = buildData.items
+            .map(({ id, count }: { id: string; count: number }) => {
+              const item = ITEMS.find((i) => i.id === id);
+              return item ? { item, count } : null;
+            })
+            .filter(Boolean);
+
+          // Añadir cada item con su cantidad correspondiente
+          itemsToAdd.forEach(
+            ({ item, count }: { item: Item; count: number }) => {
+              for (let i = 0; i < count; i++) {
+                addItem(item);
+              }
+            }
+          );
+
+          // Importar la build completa
+          importBuild({ items: itemsToAdd, survivorId: buildData.survivorId });
+        }
+
         toast.success("Build loaded from URL!");
+        setSelectKey((prev) => prev + 1); // Forzar re-render si es necesario
       } catch (error) {
         toast.error("Invalid build URL");
         console.error(error);
       }
     }
-  }, [addItem, resetBuild, searchParams]);
+  }, [addItem, importBuild, resetBuild, searchParams, setSelectedSurvivor]);
 
   // Configuración de drop
   const [{ isOver }, dropRef] = useDrop(() => ({
@@ -70,7 +111,7 @@ export default function BuildContainer() {
   dropRef(ref);
 
   // Compartir build
-  const shareBuild = () => {
+  const shareBuild = async () => {
     if (buildItems.length === 0) {
       toast.error("Build is empty");
       return;
@@ -79,17 +120,82 @@ export default function BuildContainer() {
     const buildData = {
       items: buildItems.map(({ item, count }) => ({
         id: item.id,
-        count
+        count,
       })),
-      timestamp: Date.now()
+      survivorId: selectedSurvivor?.id,
+      timestamp: Date.now(),
     };
 
     const base64Data = btoa(JSON.stringify(buildData));
     const url = `${window.location.origin}${window.location.pathname}?build=${base64Data}`;
-    
-    navigator.clipboard.writeText(url)
-      .then(() => toast.success("Build link copied to clipboard!"))
-      .catch(() => toast.error("Failed to copy link"));
+
+    try {
+      // Verificar si el navegador soporta la API del clipboard
+      if (!navigator.clipboard) {
+        throw new Error("Clipboard API not supported");
+      }
+
+      await navigator.clipboard.writeText(url);
+
+      toast.success(
+        <div className="flex items-center gap-2">
+          <FiCheck className="text-green-500" />
+          <span>Build link copied to clipboard!</span>
+        </div>,
+        {
+          duration: 3000,
+          position: "bottom-center",
+          style: {
+            background: "#1F2937",
+            color: "#F9FAFB",
+            borderRadius: "0.5rem",
+            border: "1px solid #374151",
+            padding: "0.75rem 1rem",
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Failed to copy:", error);
+
+      // Fallback para navegadores que no soportan la API del clipboard
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+
+      try {
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (successful) {
+          toast.success(
+            <div className="flex items-center gap-2">
+              <FiCheck className="text-green-500" />
+              <span>Build link copied to clipboard!</span>
+            </div>,
+            {
+              duration: 3000,
+              position: "bottom-center",
+            }
+          );
+        } else {
+          throw new Error("Fallback copy failed");
+        }
+      } catch (fallbackError) {
+        document.body.removeChild(textArea);
+        console.error(fallbackError);
+        toast.error(
+          <div className="flex items-center gap-2">
+            <FiX className="text-red-500" />
+            <span>Failed to copy link. Please copy manually: {url}</span>
+          </div>,
+          {
+            duration: 5000,
+            position: "bottom-center",
+          }
+        );
+      }
+    }
   };
 
   // Guardar build con nombre
@@ -99,7 +205,7 @@ export default function BuildContainer() {
       return;
     }
 
-    saveCurrentBuild(buildName.trim(), selectedSurvivorId);
+    saveCurrentBuild(buildName.trim(), selectedSurvivor.id);
     toast.success(`Build "${buildName}" saved!`);
     setBuildName("");
     setSaveDialogOpen(false);
@@ -115,26 +221,39 @@ export default function BuildContainer() {
     const buildData = {
       items: buildItems.map(({ item, count }) => ({
         id: item.id,
-        count
+        count,
       })),
-      survivorId: selectedSurvivorId,
-      timestamp: Date.now()
+      survivorId: selectedSurvivor.id,
+      timestamp: Date.now(),
     };
 
     const dataStr = JSON.stringify(buildData, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    
-    const exportName = `ror2-build-${new Date().toISOString().slice(0, 10)}.json`;
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(
+      dataStr
+    )}`;
+
+    const exportName = `ror2-build-${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
     const link = document.createElement("a");
     link.setAttribute("href", dataUri);
     link.setAttribute("download", exportName);
     link.click();
-    
+
     toast.success("Build exported successfully!");
   };
 
-  // Importar build desde JSON
-  const importBuild = () => {
+  const handleDeleteBuild = () => {
+    if (!selectedBuildId) return;
+
+    deleteBuild(selectedBuildId);
+    toast.success("Build deleted successfully!");
+    setSelectedBuildId(null); // Limpiamos la selección
+    setDeleteDialogOpen(false);
+    setSelectKey((prev) => prev + 1); // Forzar re-render del select
+  };
+
+  const handleImportBuild = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -146,26 +265,46 @@ export default function BuildContainer() {
 
     setIsImporting(true);
     const reader = new FileReader();
-    
+
     reader.onload = (event) => {
       try {
         const buildData = JSON.parse(event.target?.result as string);
-        const itemsToAdd = buildData.items.map(({ id, count }) => {
-          const item = ITEMS.find(i => i.id === id);
-          return item ? { item, count } : null;
-        }).filter(Boolean);
-        
-        resetBuild();
-        itemsToAdd.forEach(({ item, count }) => {
-          for (let i = 0; i < count; i++) {
-            addItem(item);
+        // Cambiar al survivor correspondiente
+        if (buildData.survivorId) {
+          const foundSurvivor = SURVIVORS.find(
+            (s) => s.id === buildData.survivorId
+          );
+          if (foundSurvivor) {
+            setSelectedSurvivor(foundSurvivor);
           }
-        });
-        
+        }
+
+        if (buildData.items) {
+          // Crear arreglo de items con sus cantidades
+          const itemsToAdd: BuildItem[] = buildData.items
+            .map(({ id, count }: { id: string; count: number }) => {
+              const item = ITEMS.find((i) => i.id === id);
+              return item ? { item, count } : null;
+            })
+            .filter(Boolean);
+
+          // Añadir cada item con su cantidad correspondiente
+          itemsToAdd.forEach(
+            ({ item, count }: { item: Item; count: number }) => {
+              for (let i = 0; i < count; i++) {
+                addItem(item);
+              }
+            }
+          );
+
+          // Importar la build completa
+          importBuild({ items: itemsToAdd, survivorId: buildData.survivorId });
+        }
+
         toast.success("Build imported successfully!");
       } catch (error) {
         toast.error("Invalid build file");
-        console.error(error)
+        console.error(error);
       } finally {
         setIsImporting(false);
         if (fileInputRef.current) {
@@ -173,12 +312,16 @@ export default function BuildContainer() {
         }
       }
     };
-    
+
     reader.readAsText(file);
   };
 
   // Obtener builds guardadas para el survivor actual
-  const savedBuilds = useSavedBuilds(selectedSurvivorId);
+  const savedBuilds = getBuildsBySurvivor(selectedSurvivor.id);
+
+  useEffect(() => {
+    setSelectKey((prev) => prev + 1);
+  }, [savedBuilds.length]);
 
   return (
     <div
@@ -195,45 +338,6 @@ export default function BuildContainer() {
         accept=".json"
         className="hidden"
       />
-
-      {/* Dialog para guardar build */}
-      <Dialog.Root open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-        <Dialog.Trigger asChild>
-          <button
-            className="p-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
-            title="Save build"
-          >
-            <FiSave />
-          </button>
-        </Dialog.Trigger>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
-            <Dialog.Title className="text-xl font-semibold mb-4">Save Build</Dialog.Title>
-            <div className="space-y-4">
-              <input
-                type="text"
-                value={buildName}
-                onChange={(e) => setBuildName(e.target.value)}
-                placeholder="Enter build name"
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded"
-              />
-              <div className="flex justify-end gap-2">
-                <Dialog.Close className="px-4 py-2 rounded hover:bg-gray-700">
-                  Cancel
-                </Dialog.Close>
-                <button
-                  onClick={handleSaveBuild}
-                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Your Build</h2>
         <div className="flex gap-2">
@@ -244,6 +348,47 @@ export default function BuildContainer() {
           >
             <FiShare2 />
           </button>
+
+          {/* Dialog para guardar build */}
+          <Dialog.Root open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+            <Dialog.Trigger asChild>
+              <button
+                className="p-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+                title="Save build"
+              >
+                <FiSave />
+              </button>
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+              <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+                <Dialog.Title className="text-xl font-semibold mb-4">
+                  Save Build
+                </Dialog.Title>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={buildName}
+                    onChange={(e) => setBuildName(e.target.value)}
+                    placeholder="Enter build name"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Dialog.Close className="px-4 py-2 rounded hover:bg-gray-700">
+                      Cancel
+                    </Dialog.Close>
+                    <button
+                      onClick={handleSaveBuild}
+                      className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+
           <button
             onClick={exportBuild}
             className="p-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
@@ -252,7 +397,7 @@ export default function BuildContainer() {
             <FiDownload />
           </button>
           <button
-            onClick={importBuild}
+            onClick={handleImportBuild}
             className="p-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
             title="Import build"
             disabled={isImporting}
@@ -262,25 +407,76 @@ export default function BuildContainer() {
         </div>
       </div>
 
-      {/* Dropdown para cargar builds */}
-      <div className="relative mb-4">
-        <select
-          onChange={(e) => loadBuild(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm"
-          defaultValue=""
+      {/* Dropdown para cargar builds con botón de eliminación */}
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <select
+            key={selectKey}
+            onChange={(e) => {
+              setSelectedBuildId(e.target.value);
+              loadBuild(e.target.value);
+            }}
+            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm cursor-pointer"
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Load saved build...
+            </option>
+            {savedBuilds.length > 0 ? (
+              savedBuilds.map((build) => (
+                <option
+                  key={build.id}
+                  value={build.id}
+                  className="cursor-pointer"
+                >
+                  {build.name} ({new Date(build.timestamp).toLocaleDateString()}
+                  )
+                </option>
+              ))
+            ) : (
+              <option disabled>No saved builds</option>
+            )}
+          </select>
+        </div>
+
+        <button
+          onClick={() => selectedBuildId && setDeleteDialogOpen(true)}
+          disabled={!selectedBuildId}
+          className="p-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Delete selected build"
         >
-          <option value="" disabled>Load saved build...</option>
-          {savedBuilds.length > 0 ? (
-            savedBuilds.map((build) => (
-              <option key={build.id} value={build.id}>
-                {build.name} ({new Date(build.timestamp).toLocaleDateString()})
-              </option>
-            ))
-          ) : (
-            <option disabled>No saved builds</option>
-          )}
-        </select>
+          <FiTrash2 />
+        </button>
       </div>
+
+      {/* Diálogo de confirmación para eliminar build */}
+      <Dialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+            <Dialog.Title className="text-xl font-semibold mb-4">
+              Delete Build
+            </Dialog.Title>
+            <div className="space-y-4">
+              <p>
+                Are you sure you want to delete this build? This action cannot
+                be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <Dialog.Close className="px-4 py-2 rounded hover:bg-gray-700">
+                  Cancel
+                </Dialog.Close>
+                <button
+                  onClick={handleDeleteBuild}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Lista de items */}
       <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">

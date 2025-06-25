@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Risk of Rain 2 Build Planner Toolkit
 
-## Getting Started
+<a href="https://coff.ee/zeik" target="_blank">
+  <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy Me A Coffee" style="height: 40px !important;">
+</a>
 
-First, run the development server:
+Friendly web-based tool for planning and sharing item builds in Risk of Rain 2. Create, save, and optimize your builds for each survivor.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+[![GitHub license](https://img.shields.io/github/license/TZeik/ror2-builder?style=flat-square)](https://github.com/TZeik/ror2-builder/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/TZeik/ror2-builder?style=flat-square)](https://github.com/TZeik/ror2-builder/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/TZeik/ror2-builder?style=flat-square)](https://github.com/TZeik/ror2-builder/issues)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ☕ Support the Project
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+If you enjoy using this tool and want to support its development, consider buying me a coffee! Every contribution helps me maintain and improve this project.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[![Buy Me A Coffee](https://i.imgur.com/placeholder-coffee-banner.png)](https://coff.ee/zeik
 
-## Learn More
+## ✨ Features
 
-To learn more about Next.js, take a look at the following resources:
+- **Survivor-specific builds** - Select from all RoR2 survivors with accurate stats
+- **Interactive item management** - Drag & drop, quantity adjustment, and stacking
+- **Build sharing** - Generate shareable links or export/import builds
+- **Responsive design** - Works on desktop and mobile devices
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Made with ❤️ by Zeik | [Support me on Coffee](https://coff.ee/zeik) | [GitHub](https://github.com/TZeik)

@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { FaGithub, FaDiscord, FaBook } from "react-icons/fa";
+import { FaBook } from "react-icons/fa";
+import { BiCoffeeTogo } from "react-icons/bi";
+import { FaCircleInfo } from "react-icons/fa6";
+import * as Popover from "@radix-ui/react-popover";
 
 export default function Header() {
   return (
@@ -8,40 +11,82 @@ export default function Header() {
         {/* Grupo de título */}
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-orange-500">
-            {"Zeik's Risk of Rain 2 Build Planner"}
+            {"Zeik's Risk of Rain 2 Toolkit"}
           </h1>
-          <p className="text-gray-400 text-sm">
-            Create your perfect builds
-          </p>
+          <p className="text-gray-400 text-sm">Friendly webtool for item and character reference and build planner</p>
         </div>
 
         {/* Navegación */}
         <nav className="flex gap-6 items-center flex-wrap justify-center">
+          {/* About con Popover (tooltip click-to-close) */}
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <button className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm cursor-pointer">
+                <FaCircleInfo className="text-lg" />
+                <span>About</span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                side="bottom"
+                sideOffset={5}
+                className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-sm text-gray-300 max-w-s shadow-lg z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+              >
+                <h3 className="font-semibold text-orange-500 mb-2">
+                  Welcome to the Risk of Rain 2 Toolkit
+                </h3>
+                <p className="mt-2 pl-1 text-s mb-2">
+                  With this tool, you can plan builds and keep track of items.
+                  <br />
+                  Save your builds or share them with your friends!
+                </p>
+                <h3 className="font-semibold text-orange-500 mb-2">
+                  How to use:
+                </h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>
+                    Left click or drag to add items to your build (you can stack
+                    them)
+                  </li>
+                  <li>Right click to remove items from the build</li>
+                  <li>Click +/- to adjust quantities</li>
+                  <li>
+                    Save builds for each survivor, select a survivor from the
+                    selector
+                  </li>
+                  <li>
+                    Share builds via url or export them into a local importable
+                    file
+                  </li>
+                </ul>
+                <p className="mt-4 text-xs italic">
+                  This is a Fan-made tool - And is NOT affiliated with Hopoo
+                  Games nor Gearbox Publishing
+                </p>
+                <Popover.Arrow className="fill-gray-700" />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+
           <Link
-            href="/docs"
+            href="https://coff.ee/zeik"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+          >
+            <BiCoffeeTogo className="text-lg" />
+            <span>Buy me a coffee!</span>
+          </Link>
+          <Link
+            href="https://riskofrain2.fandom.com/wiki/Risk_of_Rain_2_Wiki"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-blue-400 hover:text-white transition-colors text-sm"
           >
             <FaBook className="text-lg" />
-            <span>Docs</span>
+            <span>Wiki</span>
           </Link>
-          <Link
-            href="https://github.com/yourusername/ror2-build-planner"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-          >
-            <FaGithub className="text-lg" />
-            <span>GitHub</span>
-          </Link>
-          <Link
-            href="https://discord.gg/ror2"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-          >
-            <FaDiscord className="text-lg" />
-            <span>Community</span>
-          </Link>
+          <span className="text-sm text-gray-500">v1.0.0</span>
         </nav>
       </div>
     </header>

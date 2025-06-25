@@ -19,6 +19,19 @@ export interface Survivor {
   iconUrl: string;
   description: string;
   wikiUrl: string;
+  statistics: Statistics;
+}
+
+interface Statistics {
+  health: number;
+  $health: number;
+  healthRegen: number;
+  $healthRegen: number;
+  damage: number;
+  $damage: number;
+  speed: number;
+  armor: number;
+  mass: number;
 }
 
 export interface Build {
@@ -26,4 +39,9 @@ export interface Build {
   items: {
     [itemId: string]: number; // Cantidad por item
   };
+}
+
+export interface BuildItem {
+  item: Item;
+  count: number;
 }

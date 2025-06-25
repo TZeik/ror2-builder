@@ -1,31 +1,42 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
-import { FiChevronDown, FiCheck } from "react-icons/fi";
+import { FiChevronDown, FiCheck, FiPlus, FiMinus } from "react-icons/fi";
 import { SURVIVORS } from "@/data/survivors";
 import { useBuildActions } from "@/store/useBuildStore";
+import { useSurvivor } from "@/context/SurvivorContext";
 import { ITEMS } from "@/data/items";
 
 export default function SurvivorSelector() {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedSurvivor, setSelectedSurvivor] = useState(SURVIVORS[0]);
+  const [level, setLevel] = useState(1);
+  const { selectedSurvivor, setSelectedSurvivor } = useSurvivor();
   const { addItem, resetBuild } = useBuildActions();
-
   const toggleDropdown = () => setIsOpen(!isOpen);
 
   const handleSelect = (survivor: (typeof SURVIVORS)[0]) => {
     setSelectedSurvivor(survivor);
     setIsOpen(false);
-    
-    // Resetear el build primero
+    setLevel(1); // Resetear nivel al cambiar de personaje
     resetBuild();
-    
-    // Si el survivor es Captain, añadir Defensive Microbots
+
     if (survivor.id === "captain") {
-      const microbotsItem = ITEMS.find(item => item.id === "defensive-microbots");
+      const microbotsItem = ITEMS.find(
+        (item) => item.id === "defensive-microbots"
+      );
       if (microbotsItem) {
         addItem(microbotsItem);
       }
+    }
+  };
+
+  const calculateStat = (base: number, perLevel: number) => {
+    return base + perLevel * (level - 1);
+  };
+
+  const handleLevelChange = (newLevel: number) => {
+    if (newLevel >= 1 && newLevel <= 94) {
+      setLevel(newLevel);
     }
   };
 
@@ -49,9 +60,10 @@ export default function SurvivorSelector() {
                 alt={selectedSurvivor.name}
                 width={32}
                 height={32}
-                className="rounded-sm object-cover"
+                className="rounded-sm object-cover border border-gray-400"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/survivors/commando.png";
+                  (e.target as HTMLImageElement).src =
+                    "/survivors/commando.png";
                 }}
               />
             </div>
@@ -111,10 +123,124 @@ export default function SurvivorSelector() {
 
       {/* Descripción del personaje seleccionado */}
       <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
-        <h3 className="text-lg font-medium text-orange-500 mb-1">
-          {selectedSurvivor.name}
-        </h3>
-        <p className="text-gray-300 text-sm">{selectedSurvivor.description}</p>
+        <div className="flex flex-col md:flex-row gap-10">
+          {/* Imagen del personaje */}
+          <div className="flex-shrink-0">
+            <div className="w-32 h-32 relative">
+              <Image
+                src={selectedSurvivor.iconUrl}
+                alt={selectedSurvivor.name}
+                width={128}
+                height={128}
+                className="rounded-sm object-cover border border-gray-200"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/survivors/default.png";
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Información y estadísticas */}
+          <div className="flex-1">
+            <h3 className="text-lg font-medium text-orange-500 mb-1">
+              {selectedSurvivor.name}
+            </h3>
+            <p className="text-gray-300 text-sm mb-3">
+              {selectedSurvivor.description}
+            </p>
+
+            {/* Selector de nivel */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-gray-400 text-sm">Level:</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleLevelChange(level - 1)}
+                  disabled={level <= 1}
+                  className="p-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
+                >
+                  <FiMinus size={14} />
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="94"
+                  value={level}
+                  onChange={(e) =>
+                    handleLevelChange(parseInt(e.target.value) || 1)
+                  }
+                  className="w-16 text-center bg-gray-700 border border-gray-600 rounded py-1 px-2"
+                />
+                <button
+                  onClick={() => handleLevelChange(level + 1)}
+                  disabled={level >= 94}
+                  className="p-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
+                >
+                  <FiPlus size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Estadísticas */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-gray-400">Health</p>
+                <p className="font-medium">
+                  {calculateStat(
+                    selectedSurvivor.statistics.health,
+                    selectedSurvivor.statistics.$health
+                  ).toFixed(1)}
+                  <span className="text-gray-400">
+                    {` (+${selectedSurvivor.statistics.$health})`}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Health Regen</p>
+                <p className="font-medium">
+                  {calculateStat(
+                    selectedSurvivor.statistics.healthRegen,
+                    selectedSurvivor.statistics.$healthRegen
+                  ).toFixed(1)}
+                  /s
+                  <span className="text-gray-400">
+                    {` (+${selectedSurvivor.statistics.$healthRegen}/s)`}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Damage</p>
+                <p className="font-medium">
+                  {calculateStat(
+                    selectedSurvivor.statistics.damage,
+                    selectedSurvivor.statistics.$damage
+                  ).toFixed(1)}
+                  <span className="text-gray-400">
+                    {` (+${selectedSurvivor.statistics.$damage})`}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Speed</p>
+                <p className="font-medium">
+                  {selectedSurvivor.statistics.speed} m/s
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Armor</p>
+                <p className="font-medium">
+                  {selectedSurvivor.statistics.armor}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-400">Mass</p>
+                <p className="font-medium">
+                  {selectedSurvivor.statistics.mass}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {selectedSurvivor.id === "captain" && (
           <p className="text-xs text-green-400 mt-2">
             Default item added: Defensive Microbots
