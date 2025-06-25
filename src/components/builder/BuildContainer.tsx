@@ -21,6 +21,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { BuildItem, Item } from "@/lib/types/gameTypes";
 import { useSurvivor } from "@/context/SurvivorContext";
 import { SURVIVORS } from "@/data/survivors";
+import { useDevice } from "@/context/DeviceContext";
 
 export default function BuildContainer() {
   const searchParams = useSearchParams();
@@ -322,6 +323,247 @@ export default function BuildContainer() {
   useEffect(() => {
     setSelectKey((prev) => prev + 1);
   }, [savedBuilds.length]);
+
+  const { isMobile } = useDevice();
+
+  if (isMobile) {
+    return (
+      <div
+        ref={ref}
+        className={`bg-gray-800 border ${
+          isOver ? "border-orange-500" : "border-gray-700"
+        } rounded-lg p-3 h-fit sticky top-4 transition-colors`}
+      >
+        {/* Input oculto para importar */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".json"
+          className="hidden"
+        />
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg font-semibold">Your Build</h2>
+          <div className="flex gap-1">
+            <button
+              onClick={shareBuild}
+              className="p-1 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+              title="Share build"
+            >
+              <FiShare2 size={16} />
+            </button>
+
+            {/* Dialog para guardar build */}
+            <Dialog.Root open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+              <Dialog.Trigger asChild>
+                <button
+                  className="p-1 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+                  title="Save build"
+                >
+                  <FiSave size={16} />
+                </button>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs">
+                  <Dialog.Title className="text-lg font-semibold mb-3">
+                    Save Build
+                  </Dialog.Title>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={buildName}
+                      onChange={(e) => setBuildName(e.target.value)}
+                      placeholder="Enter build name"
+                      className="w-full px-3 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Dialog.Close className="px-3 py-1 rounded hover:bg-gray-700 text-sm">
+                        Cancel
+                      </Dialog.Close>
+                      <button
+                        onClick={handleSaveBuild}
+                        className="px-3 py-1 bg-orange-500 hover:bg-orange-600 rounded text-sm"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+
+            <button
+              onClick={exportBuild}
+              className="p-1 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+              title="Export build"
+            >
+              <FiDownload size={16} />
+            </button>
+            <button
+              onClick={handleImportBuild}
+              className="p-1 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+              title="Import build"
+              disabled={isImporting}
+            >
+              <FiUpload size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Dropdown para cargar builds con botón de eliminación */}
+        <div className="flex gap-1 mb-3">
+          <div className="relative flex-1">
+            <select
+              key={selectKey}
+              onChange={(e) => {
+                setSelectedBuildId(e.target.value);
+                loadBuild(e.target.value);
+              }}
+              className="w-full bg-gray-700 border border-gray-600 rounded p-1 text-xs cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Load saved build...
+              </option>
+              {savedBuilds.length > 0 ? (
+                savedBuilds.map((build) => (
+                  <option
+                    key={build.id}
+                    value={build.id}
+                    className="cursor-pointer"
+                  >
+                    {build.name} (
+                    {new Date(build.timestamp).toLocaleDateString()})
+                  </option>
+                ))
+              ) : (
+                <option disabled>No saved builds</option>
+              )}
+            </select>
+          </div>
+
+          <button
+            onClick={() => selectedBuildId && setDeleteDialogOpen(true)}
+            disabled={!selectedBuildId}
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete selected build"
+          >
+            <FiTrash2 size={16} />
+          </button>
+        </div>
+
+        {/* Diálogo de confirmación para eliminar build */}
+        <Dialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 rounded-lg p-4 w-[90%] max-w-xs">
+              <Dialog.Title className="text-lg font-semibold mb-3">
+                Delete Build
+              </Dialog.Title>
+              <div className="space-y-3">
+                <p className="text-sm">
+                  Are you sure you want to delete this build? This action cannot
+                  be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Dialog.Close className="px-3 py-1 rounded hover:bg-gray-700 text-sm">
+                    Cancel
+                  </Dialog.Close>
+                  <button
+                    onClick={handleDeleteBuild}
+                    className="px-3 py-1 bg-red-500 hover:bg-red-600 rounded text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+
+        {/* Lista de items */}
+        <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+          {buildItems.length > 0 ? (
+            buildItems.map(({ item, count }) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 p-1 bg-gray-750 rounded border border-gray-700"
+              >
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="32px"
+                    className="object-contain"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xs font-medium truncate">{item.name}</h3>
+                  <p className="text-2xs text-gray-400 capitalize">
+                    {item.rarity}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => updateItemCount(item.id, count - 1)}
+                    className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
+                  >
+                    <FiMinus size={12} />
+                  </button>
+
+                  <span className="w-4 text-center text-xs">{count}</span>
+
+                  <button
+                    onClick={() => updateItemCount(item.id, count + 1)}
+                    className="p-0.5 text-gray-400 hover:text-white rounded hover:bg-gray-700 cursor-pointer"
+                  >
+                    <FiPlus size={12} />
+                  </button>
+
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="p-0.5 text-gray-400 hover:text-red-500 rounded ml-1 cursor-pointer"
+                    title="Remove item"
+                  >
+                    <FiTrash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-3 text-gray-500 text-sm">
+              Touch items to add
+            </div>
+          )}
+        </div>
+
+        {/* Estadísticas del build */}
+        <div className="border-t border-gray-700 pt-3">
+          <h3 className="font-medium mb-1 text-sm">Build Summary</h3>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p className="text-gray-400">Total Items</p>
+              <p className="font-medium">
+                {buildItems.reduce((sum, item) => sum + item.count, 0)}
+              </p>
+            </div>
+          </div>
+
+          <button
+            className="w-full mt-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-medium transition-colors"
+            onClick={() => resetBuild()}
+          >
+            Reset Build
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

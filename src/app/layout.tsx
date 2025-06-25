@@ -6,6 +6,7 @@ import { SurvivorProvider } from "@/context/SurvivorContext";
 import { Toaster } from "react-hot-toast";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import { DeviceProvider } from "@/context/DeviceContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,28 +21,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         className={`${inter.className} bg-gray-900 text-white min-h-screen`}
       >
-        
-        <SurvivorProvider>
-          <DragDropProvider>
-            <Toaster
-              position="bottom-center"
-              toastOptions={{
-                style: {
-                  background: "#1F2937",
-                  color: "#F9FAFB",
-                  border: "1px solid #374151",
-                },
-              }}
-            />
-            <Header />
-            {children}
-            <Footer />
-          </DragDropProvider>
-        </SurvivorProvider>
+        <DeviceProvider>
+          <SurvivorProvider>
+            <DragDropProvider>
+              <Toaster
+                position="bottom-center"
+                toastOptions={{
+                  style: {
+                    background: "#1F2937",
+                    color: "#F9FAFB",
+                    border: "1px solid #374151",
+                  },
+                }}
+              />
+              <Header />
+              {children}
+              <Footer />
+            </DragDropProvider>
+          </SurvivorProvider>
+        </DeviceProvider>
       </body>
     </html>
   );
