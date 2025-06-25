@@ -171,7 +171,7 @@ export default function Header() {
             <FaBook className="text-lg" />
             <span>Wiki</span>
           </Link>
-          <span className="text-sm text-gray-500">v1.0.1</span>
+          <span className="text-sm text-gray-500">v1.1.0</span>
         </nav>
       </div>
     </header>

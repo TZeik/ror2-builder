@@ -42,7 +42,7 @@ export default function Footer() {
 
             <div className="text-gray-500 text-xs text-center md:text-right">
               <p>Found an issue? <Link href="https://github.com/TZeik/ror2-builder/issues" target="_blank" className="text-blue-400 hover:underline">Report it here</Link></p>
-              <p className="mt-1">v1.0.1 - Last updated: {new Date().toLocaleDateString()}</p>
+              <p className="mt-1">v1.1.0 - Last updated: {new Date().toLocaleDateString()}</p>
             </div>
           </div>
         </div>
